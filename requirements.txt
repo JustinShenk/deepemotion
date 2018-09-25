@@ -2,5 +2,6 @@ flask
 uwsgi
 matplotlib
 pandas
+seaborn
 numpy
 fer
