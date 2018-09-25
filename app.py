@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
+import seaborn as sns
 
 from fer.fer import FER
 from fer.classes import Video
@@ -32,11 +33,10 @@ except:
 
 global detector, graph
 graph = K.get_session().graph
-
+sns.set()
 
 detector = FER()
 current_video = None
-
 
 def read_csv(file):
     position_df = pd.read_csv(file, index_col='time_stamps_vec')[['x', 'y']]
@@ -176,7 +176,7 @@ def get_output_images(outdir, nr=3):
     if total_files <= nr:
         return files
     output_images = []
-    for idx in range(0, len(files), total_files//nr):
+    for idx, interval_idx in enumerate(range(0, len(files), total_files//nr)):
         output_images.append(files[idx])
         if idx+1 == nr:
             break
@@ -202,19 +202,28 @@ def index():
         session.pop('explore', None)
     if request.args.get('action') == 'analyze':
         session['explore'] = True
+        # Remove previous frames
+        [os.remove(f) for f in glob.glob(os.path.join(app.config['UPLOAD_FOLDER'],'frame*.jpg'))]
+
+        # Analyze video and save every 50th frame
         with graph.as_default():
-            raw_data = current_video.analyze(detector, display=False, frequency=50)
+            raw_data = current_video.analyze(detector, display=False, frequency=30)
         video_outfile = 'output.mp4'
         assert os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], video_outfile)), app.logger.error("no output.mp4")
         session['video_filename'] = 'output.mp4'
         df = current_video.to_pandas(raw_data)
-        current_df = current_video.get_first_face(df)
+        current_df = current_video.get_first_face(df).dropna()
         csvpath = ''.join(session['filename'].split('.')[:-1]) + '.csv'
         csvpath = os.path.join(app.config['UPLOAD_FOLDER'], csvpath)
         current_df.to_csv(csvpath)
-        output['csv_filename'] = csvpath
+        output['csv_filename'] = os.path.split(csvpath)[1]
         output['dataframe'] = current_df.head(10).to_html(float_format=lambda x: '%.2f' % x)
         output['output_images'] = get_output_images(current_video.outdir)
+        emotions = current_video.get_emotions(current_df)
+        emotions.plot()
+        emotions_chart = os.path.join(app.config['UPLOAD_FOLDER'], 'emotions_chart.png')
+        plt.savefig(emotions_chart)
+        output['emotions_chart'] = 'emotions_chart.png'
     # if request.args.get('hist_plot'):
     #     overlay = request.args.get('overlayCheck')
     #     columns = request.args.getlist('hist_plot')

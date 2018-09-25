@@ -30,7 +30,7 @@
 <main role="main" class="container">
     <div class="starter-template">
         <h1>Video Emotion Analysis</h1>
-        <p class="lead">Analyze emotions in frames with Peltarion.</p>
+        <p class="lead">Analyze emotions in videos.</p>
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -92,18 +92,23 @@
                 <div>
 {#                    <video src="/uploads/{{ video_filename|safe}}" autoplay onerror="checkExist('/uploads/{{ video_filename|safe }}')"></video>#}
                     {% for image in output_images %}
-                        <img src="{{ image }}" width="200" height="auto">
+                        <img src="{{ image }}" width="250" height="auto">
                     {% endfor %}
-                    <a href="/uploads/{{ video_filename|safe }}"><i class="fa fa-download"></i></a>
+{#                    <a href="/uploads/{{ video_filename|safe }}"><i class="fa fa-download"></i></a>#}
                 </div>
             </div>
         </div>
         <div id="chart">
             <h3>Data</h3>
             <div class="container DataFrame">
-                {{ csv_filename|safe }}
+                <a href="/uploads/{{  csv_filename|safe }}">{{ csv_filename|safe }}</a>
                 <div>
+                    <div>
+                    <img src="/uploads/{{ emotions_chart|safe }}" class="img-fluid"/>
+                    </div>
+                    <div>
                     {{ dataframe|safe }}
+                    </div>
                     <a href="/uploads/{{ csv_filename|safe }}"><i class="fa fa-download"></i></a>
                 </div>
             </div>
@@ -111,35 +116,34 @@
     {% endif %}
     {% if explore %}
         <div id="analysis">
-            <h3>Analysis</h3>
-            <h4>Histograms</h4>
-            <br>
-            <form method="GET" id="hist_plot_form">
-                <div class="form-group">
-                <div class="custom-control custom-checkbox">
-                  <input type="checkbox" class="custom-control-input" id="overlayCheck" name="overlayCheck">
-                  <label class="custom-control-label" for="overlayCheck">Overlay multiple plots</label>
-                </div>
-                    <label for="hist_plot">Select variables to plot</label>
-                    <select multiple class="form-control" id="hist_plot" name="hist_plot" multiple="multiple">
-                        {% for variable in ['x','y','distance'] %}
-                            <option>{{ variable }}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit" id="variableButton" class="btn btn-primary">Submit</button>
-                </div>
-                <div id="plots">
-                    {% if plots is defined %}
-                        <ul>
-                            {% for name, href in plots.items() %}
-                                <li><img id="img_id" +{{ name|safe }} src="uploads/{{ href|safe }}"
-                                         onerror="checkExist({{ href|safe }}, 'img_id+'+{{ name|safe }} )" >
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-                </div>
-            </form>
+{#            <h3>Analysis</h3>#}
+{#            <br>#}
+{#            <form method="GET" id="hist_plot_form">#}
+{#                <div class="form-group">#}
+{#                <div class="custom-control custom-checkbox">#}
+{#                  <input type="checkbox" class="custom-control-input" id="overlayCheck" name="overlayCheck">#}
+{#                  <label class="custom-control-label" for="overlayCheck">Overlay multiple plots</label>#}
+{#                </div>#}
+{#                    <label for="hist_plot">Select variables to plot</label>#}
+{#                    <select multiple class="form-control" id="hist_plot" name="hist_plot" multiple="multiple">#}
+{#                        {% for variable in ['x','y','distance'] %}#}
+{#                            <option>{{ variable }}</option>#}
+{#                        {% endfor %}#}
+{#                    </select>#}
+{#                    <button type="submit" id="variableButton" class="btn btn-primary">Submit</button>#}
+{#                </div>#}
+{#                <div id="plots">#}
+{#                    {% if plots is defined %}#}
+{#                        <ul>#}
+{#                            {% for name, href in plots.items() %}#}
+{#                                <li><img id="img_id" +{{ name|safe }} src="uploads/{{ href|safe }}"#}
+{#                                         onerror="checkExist({{ href|safe }}, 'img_id+'+{{ name|safe }} )" >#}
+{#                                </li>#}
+{#                            {% endfor %}#}
+{#                        </ul>#}
+{#                    {% endif %}#}
+{#                </div>#}
+{#            </form>#}
         </div>
     {% endif %}
 </main>
