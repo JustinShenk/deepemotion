@@ -1,0 +1,6 @@
+flask
+uwsgi
+matplotlib
+pandas
+numpy
+fer

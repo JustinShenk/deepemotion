@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Activity Analytics (Demo)</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+    <a class="navbar-brand" href="#">Video Emotion Analysis</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+            aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="?action=reset">Reset <span class="sr-only">(current)</span></a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<main role="main" class="container">
+    <div class="starter-template">
+        <h1>Video Emotion Analysis</h1>
+        <p class="lead">Analyze emotions in frames with Peltarion.</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+
+        {% if messages %}
+            {% for message in messages %}
+                {% if "Error" not in message[1]: %}
+                    <div class="alert alert-info">
+                        <strong>Success! </strong> {{ message[1] }}
+                    </div>
+                {% endif %}
+
+                {% if "Error" in message[1]: %}
+                    <div class="alert alert-danger">
+                        <strong>Error: </strong> {{ message[1] }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <div id="load_data">
+        {% if loaded %}
+{#                    <a href="{{ url_for('index', action='reset') }}" class="btn btn-outline-danger pull-right" role="button"#}
+{#                       aria-pressed="true">Reset</a>#}
+        {% endif %}
+        <div class="wrapper-all">
+        <div id="drag-and-drop"></div>
+        </div>
+{#        <form method=POST enctype=multipart/form-data id="csvForm">#}
+{#            <div class="form-group">#}
+{#                <label for="inputPosition">For demo usage only.</label>#}
+{#                <input id="csvUpload" type="file" class="form-control-file" id="inputPosition"#}
+{#                       onchange="this.form.submit()" aria-describedby="fileHelp" name="upload" multiple>#}
+{#                Or, load the sample file: <a href="/?action=load_sample">test.mp4</a>#}
+{#            </div>#}
+{#        </form>#}
+            {% if explore is undefined %}
+{#                <div class="container DataFrame">#}
+{#                    {{ filename|safe }}#}
+{#                    {{ dataframe|safe }}#}
+{#                    {% if dataframe is defined %}#}
+{#                        <br>#}
+{#                        <a class="btn btn-primary" href="/?action=distance" role="button">Calculate distance</a>#}
+{#                    {% endif %}#}
+{#                </div>#}
+                <div class="container screenshot">
+                {% if screenshot is defined %}
+                    <img src="{{ screenshot | safe }}" width=200 height=auto/>
+                {% endif %}
+                </div>
+            {% endif %}
+        <a href="?action=analyze" role="button" class="btn btn-primary">Analyze</a>
+    </div>
+    {% if explore %}
+        <div id="output_video">
+            <h3>Video</h3>
+            <div class="container videoDisplay">
+                {{ filename|safe }}
+                <div>
+{#                    <video src="/uploads/{{ video_filename|safe}}" autoplay onerror="checkExist('/uploads/{{ video_filename|safe }}')"></video>#}
+                    {% for image in output_images %}
+                        <img src="{{ image }}" width="200" height="auto">
+                    {% endfor %}
+                    <a href="/uploads/{{ video_filename|safe }}"><i class="fa fa-download"></i></a>
+                </div>
+            </div>
+        </div>
+        <div id="chart">
+            <h3>Data</h3>
+            <div class="container DataFrame">
+                {{ csv_filename|safe }}
+                <div>
+                    {{ dataframe|safe }}
+                    <a href="/uploads/{{ csv_filename|safe }}"><i class="fa fa-download"></i></a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    {% if explore %}
+        <div id="analysis">
+            <h3>Analysis</h3>
+            <h4>Histograms</h4>
+            <br>
+            <form method="GET" id="hist_plot_form">
+                <div class="form-group">
+                <div class="custom-control custom-checkbox">
+                  <input type="checkbox" class="custom-control-input" id="overlayCheck" name="overlayCheck">
+                  <label class="custom-control-label" for="overlayCheck">Overlay multiple plots</label>
+                </div>
+                    <label for="hist_plot">Select variables to plot</label>
+                    <select multiple class="form-control" id="hist_plot" name="hist_plot" multiple="multiple">
+                        {% for variable in ['x','y','distance'] %}
+                            <option>{{ variable }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" id="variableButton" class="btn btn-primary">Submit</button>
+                </div>
+                <div id="plots">
+                    {% if plots is defined %}
+                        <ul>
+                            {% for name, href in plots.items() %}
+                                <li><img id="img_id" +{{ name|safe }} src="uploads/{{ href|safe }}"
+                                         onerror="checkExist({{ href|safe }}, 'img_id+'+{{ name|safe }} )" >
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    {% endif %}
+</main>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js"
+        integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn"
+        crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='js/popper.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+
+    function checkExist(url, id) {
+        console.log("checking " + url + " " + id);
+        setInterval(function () {
+            var request;
+            if (window.XMLHttpRequest)
+                request = new XMLHttpRequest();
+            else
+                request = new ActiveXObject("Microsoft.XMLHTTP");
+            request.open('GET', url, false);
+            request.send(); // there will be a 'pause' here until the response to come.
+            // the object request will be actually modified
+            if (request.status === 404) {
+                alert("The page you are trying to reach is not available.");
+            } else if (request.status === 200) {
+                clearInterval(checkExist);
+                $("#" + id).attr("src", url);
+            }
+        }, 100);
+    } // check every 100ms
+
+</script>
+</body>
+</html>
