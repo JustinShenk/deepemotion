@@ -16,7 +16,7 @@ import seaborn as sns
 from fer.fer import FER
 from fer.classes import Video
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, session, \
-    make_response, jsonify
+    make_response, jsonify, Response
 import keras.backend as K
 from werkzeug.utils import secure_filename
 
@@ -27,14 +27,9 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 30 * 1024 * 1024 # 30 MB limit
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 current_df = pd.DataFrame()
-SAMPLE_FILE = os.path.join(app.config['UPLOAD_FOLDER'], "test.mp4")
-try:
-    os.rename('test.mp4', SAMPLE_FILE)
-except:
-    pass
+SAMPLE_FILE = os.path.join(app.static_folder, "test.mp4")
 
 global detector, graph
-graph = K.get_session().graph
 sns.set()
 
 detector = FER()
@@ -192,32 +187,45 @@ def upload():
 
 @app.route('/analyze', methods=['GET'])
 def analyze():
+    """Process analyze request."""
     global current_df, current_video, graph
     output = {}
-    session['explore'] = True
     # Remove previous frames
     [os.remove(f) for f in glob.glob(to_uploads('frame*.jpg'))]
     # Analyze video and save every 50th frame
-    with graph.as_default():
-        print("analyzing in server")
-        raw_data = current_video.analyze(detector, display=False, frequency=30)
+    try:
+        assert current_video.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) > 0, 'Video not loaded correctly'
+        df = current_video.analyze(detector, display=False, frequency=1, output='pandas')
+        if df.dropna().empty:
+            flash('No faces detected in sampled frames of {}'.format(current_video.filename()),'error')
+            return Response('Upload failed', status=300)
+        elif len(df.dropna()) == 1:
+            flash('Only one of sample frames found with face - try another video.','error')
+    except AttributeError:
+        flash('current_video is NoneType', 'error')
+        return Response('Upload failed', status=500)
     video_outfile = 'output.mp4'
-    assert os.path.isfile(to_uploads(video_outfile)), app.logger.error("no output.mp4")
-    session['video_filename'] = 'output.mp4'
-    df = current_video.to_pandas(raw_data)
+    if not os.path.isfile(to_uploads(video_outfile)):
+        flash('Video output.mp4 not found on server','error')
+    session['video_filename'] = video_outfile
     current_df = current_video.get_first_face(df).dropna()
     csvpath = ''.join(session['filename'].split('.')[:-1]) + '.csv'
     csvpath = to_uploads(csvpath)
     current_df.to_csv(csvpath)
-    output['csv_filename'] = os.path.split(csvpath)[1]
-    output['dataframe'] = current_df.head(10).to_html(float_format=lambda x: '%.2f' % x)
-    output['output_images'] = get_output_images(current_video.outdir)
+    session['csv_filename'] = os.path.split(csvpath)[1]
+    session['dataframe'] = current_df.head(10).to_html(float_format=lambda x: '%.2f' % x)
+    session['output_images'] = get_output_images(current_video.outdir)
     emotions = current_video.get_emotions(current_df)
-    emotions.plot()
+    try:
+        emotions.plot()
+    except TypeError:
+        flash('Empty DataFrame', 'error')
+        return Response('Upload error', status=500)
     emotions_chart = to_uploads('emotions_chart.png')
     plt.savefig(emotions_chart)
-    output['emotions_chart'] = 'emotions_chart.png'
-    return render_template('results.html', **output, **session)
+    session['emotions_chart'] = 'emotions_chart.png'
+    session['explore'] = True
+    return Response('Uploaded successfully', status=200)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -225,6 +233,7 @@ def index():
     output = {}
     # Load and display sample file
     if request.args.get('action') == 'load_sample':
+        session.pop('explore', None)
         filename = SAMPLE_FILE.split('/')[-1]
         current_video = load_video(SAMPLE_FILE)
         screenshot = get_frame(current_video, encoding='opencv')
@@ -232,8 +241,10 @@ def index():
         session['screenshot'] = 'screenshot.png'
         session['filename'] = filename
         session['loaded'] = True
-        session.pop('explore', None)
-    # if request.args.get('action') == 'analyze':
+
+    if request.args.get('action') == 'analyze':
+        response = analyze()
+        return redirect('/')
     #     session['explore'] = True
     #     # Remove previous frames
     #     [os.remove(f) for f in glob.glob(to_uploads('frame*.jpg'))]

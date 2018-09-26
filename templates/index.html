@@ -37,16 +37,14 @@
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            {% for message in messages %}
-                {% if "Error" not in message[1]: %}
+            {% for category, message in messages %}
+                {% if category == 'error' %}
                     <div class="alert alert-info">
-                        <strong>Success! </strong> {{ message[1] }}
+                        <strong>Error: </strong> {{ message }}
                     </div>
-                {% endif %}
-
-                {% if "Error" in message[1]: %}
-                    <div class="alert alert-danger">
-                        <strong>Error: </strong> {{ message[1] }}
+                {% else %}
+                    <div class="alert alert-info">
+                        <strong>Success! </strong> {{ message }}
                     </div>
                 {% endif %}
             {% endfor %}
@@ -65,7 +63,7 @@
         {% endif %}
         {% if loaded and not explore %}
             <div class="d-flex justify-content-center">
-                <a href="{{ url_for('analyze') }}" role="button" class="btn btn-primary">Analyze</a>
+                <a href="{{ url_for('index', action='analyze') }}" role="button" class="btn btn-primary">Analyze</a>
             </div>
         {% endif %}
     </div>
