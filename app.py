@@ -47,7 +47,7 @@ def calc_distance(position_df):
 
 def allowed_file(filename):
     allowed = '.' in filename and \
-           filename.rsplit('.', 1)[-1].lower() in ['mp4']
+           filename.rsplit('.', 1)[-1].lower() in ['mp4','avi','mov']
     if not allowed:
         app.logger.error(filename + " not allowed")
     return allowed
@@ -171,6 +171,8 @@ def upload():
         if file.filename == '':
             flash('No selected file', category="Error")
             return redirect(request.url)
+        elif file and not allowed_file(file.filename):
+            flash('Filename {} not allowed. Try with mp4 files'.format(file.filename))
         elif file and allowed_file(file.filename):
             session.clear()
             filename = secure_filename(file.filename)
