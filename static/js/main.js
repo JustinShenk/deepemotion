@@ -16,7 +16,7 @@ var DragAndDrop = function () {
   _createClass(DragAndDrop, [{
     key: "render",
     value: function render() {
-      this.el.innerHTML = "\n      <div id=\"drop-area\">\n        <form enctype=\"multipart/form-data\" class=\"my-form\" id=\"uploadForm\">\n          <p>Drag and drop a video clip or load the <a href=\"/?action=load_sample\">sample video</a>.</p>\n          <input type=\"file\" id=\"fileElem\" accept=\"file_extension\"  name=\"upload\">\n          <label class=\"button\" for=\"fileElem\">Select a file</label>\n        </form>\n        <progress id=\"progress-bar\" max=\"100\" value=\"10\"></progress>\n        <div id=\"gallery\"></div>\n      </div>\n    ";
+      this.el.innerHTML = "\n      <div id=\"drop-area\">\n        <form enctype=\"multipart/form-data\" class=\"my-form\" id=\"uploadForm\">\n          <p>Drop a small (<5 MB) video clip or load the <a href=\"/?action=load_sample\">sample video</a>.</p>\n          <input type=\"file\" id=\"fileElem\" accept=\"file_extension\"  name=\"upload\">\n          <label class=\"button\" for=\"fileElem\">Select a file</label>\n        </form>\n        <progress id=\"progress-bar\" max=\"100\" value=\"10\"></progress>\n        <div id=\"gallery\"></div>\n      </div>\n    ";
     }
   }, {
     key: "init",
