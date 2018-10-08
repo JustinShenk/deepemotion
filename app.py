@@ -47,7 +47,7 @@ def calc_distance(position_df):
 
 def allowed_file(filename):
     allowed = '.' in filename and \
-           filename.rsplit('.', 1)[-1].lower() in ['mp4','avi','mov']
+           filename.rsplit('.', 1)[-1].lower() in ['mp4','avi','mov','mpg']
     if not allowed:
         app.logger.error(filename + " not allowed")
     return allowed
@@ -159,6 +159,7 @@ def upload():
     global current_df, current_video, graph
     app.logger.info("/upload accessed")
     if request.method == 'POST':
+        preview = False
         # check if the post request has the file part
         file = request.files.get('file')
         app.logger.info("{} - File received".format(file.filename))
@@ -176,6 +177,7 @@ def upload():
         elif file and allowed_file(file.filename):
             session.clear()
             filename = secure_filename(file.filename)
+            session['complete_video'] = request.files.get('completeVideo',False)
             mp4path = to_uploads(filename)
             file.save(mp4path)
             app.logger.info("Saved to {}".format(mp4path))
@@ -197,7 +199,9 @@ def analyze():
     # Analyze video and save every 50th frame
     try:
         assert current_video.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) > 0, 'Video not loaded correctly'
-        df = current_video.analyze(detector, display=False, frequency=1, output='pandas')
+        frequency = 1 if session['complete_video'] else 20
+        app.logger.info("Analyzing every {} frame".format(frequency))
+        df = current_video.analyze(detector, display=False, frequency=frequency, output='pandas')
         if df.dropna().empty:
             flash('No faces detected in sampled frames of {}'.format(current_video.filename()),'error')
             return Response('Upload failed', status=300)
