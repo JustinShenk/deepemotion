@@ -253,3 +253,4 @@
 // document.querySelector("#actions .cancel").onclick = function() {
 //   myDropzone.removeAllFiles(true);
 // };
+
