@@ -217,6 +217,7 @@ def remove_frames(folder):
         os.remove(file)
 
 
+
 @app.route('/analyze', methods=['GET'])
 def analyze():
     """Process analyze request."""
