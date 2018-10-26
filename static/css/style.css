@@ -1,18 +1,27 @@
 body {
-  padding-top: 5rem;
-}
-.starter-template {
-  padding: 3rem 1.5rem;
-  text-align: center;
+    /*background: rgb(243, 244, 245);*/
+    height: 100%;
+    color: rgb(100, 108, 127);
+    /*line-height: 1.4rem;*/
+    font-family: Roboto, "Open Sans", sans-serif;
+    font-size: 20px;
+    font-weight: 300;
+    text-rendering: optimizeLegibility;
+    padding-top: 60px;
 }
 
-body {
-  background-color: #DC5848;
-}
+/*.starter-template {*/
+  /*padding: 3rem 1.5rem;*/
+  /*text-align: center;*/
+/*}*/
 
-p {
-  margin-top: 0;
-}
+/*body {*/
+  /*background-color: #DC5848;*/
+/*}*/
+
+/*p {*/
+  /*margin-top: 0;*/
+/*}*/
 
 img {
     margin: 10px;
@@ -22,38 +31,38 @@ img {
   margin-bottom: 10px;
 }
 
-.button {
-  display: inline-block;
-  padding: 10px 28px 10px 28px;
-  background: black;
-  cursor: pointer;
-  border-radius: 5px;
-  color: white;
-}
+/*.button {*/
+  /*display: inline-block;*/
+  /*padding: 10px 28px 10px 28px;*/
+  /*background: black;*/
+  /*cursor: pointer;*/
+  /*border-radius: 5px;*/
+  /*color: white;*/
+/*}*/
 
-.button:hover {
-  background: white;
-  color: black;
-}
+/*.button:hover {*/
+  /*background: white;*/
+  /*color: black;*/
+/*}*/
 
 #fileElem {
   display: none;
 }
 
-#drop-area {
-  border: 10px dashed black;
-  border-radius: 20px;
-  width: 480px;
-  /*font-family: Lato;*/
-  margin: 0px auto 30px auto;
-  padding: 20px;
-  color: white;
-  text-align: center;
-}
+/*#drop-area {*/
+  /*border: 10px dashed black;*/
+  /*border-radius: 20px;*/
+  /*width: 480px;*/
+  /*!*font-family: Lato;*!*/
+  /*margin: 0px auto 30px auto;*/
+  /*padding: 20px;*/
+  /*color: white;*/
+  /*text-align: center;*/
+/*}*/
 
-#drop-area.highlight {
-  border-color: white;
-}
+/*#drop-area.highlight {*/
+  /*border-color: white;*/
+/*}*/
 
 #gallery {
   margin-top: 10px;
@@ -66,43 +75,51 @@ img {
   vertical-align: middle;
 }
 
-progress,
-progress[role][aria-valuenow] {
-  background: black;
-  border-radius: 5px;
-  border: none;
+#logo {
+  position: absolute;
+  left: 10px;
+  z-index: 3;
+  bottom: 10px;
+  padding: 20px 5px;
 }
 
-::-webkit-progress-bar {
-  background-color: black;
-  border-radius: 5px;
-}
+/*progress,*/
+/*progress[role][aria-valuenow] {*/
+  /*background: black;*/
+  /*border-radius: 5px;*/
+  /*border: none;*/
+/*}*/
 
-::-webkit-progress-value {
-  background-color: white;
-  border-radius: 5px;
-}
+/*::-webkit-progress-bar {*/
+  /*background-color: black;*/
+  /*border-radius: 5px;*/
+/*}*/
 
-::-moz-progress-bar {
-  background-color: white;
-  border-radius: 5px;
-}
+/*::-webkit-progress-value {*/
+  /*background-color: white;*/
+  /*border-radius: 5px;*/
+/*}*/
 
-.github {
-  display: flex;
-  align-items: center;
-  background: white;
-  width: 110px;
-  justify-content: center;
-  border-radius: 5px;
-  margin-top: 40px;
-}
+/*::-moz-progress-bar {*/
+  /*background-color: white;*/
+  /*border-radius: 5px;*/
+/*}*/
 
-.github img {
-  width: 30px;
-  height: 30px;
-  margin-right: 5px;
-}
+/*.github {*/
+  /*display: flex;*/
+  /*align-items: center;*/
+  /*background: white;*/
+  /*width: 110px;*/
+  /*justify-content: center;*/
+  /*border-radius: 5px;*/
+  /*margin-top: 40px;*/
+/*}*/
+
+/*.github img {*/
+  /*width: 30px;*/
+  /*height: 30px;*/
+  /*margin-right: 5px;*/
+/*}*/
 
 .link a {
   text-decoration: none;
@@ -110,8 +127,41 @@ progress[role][aria-valuenow] {
   /*font-family: Lato;*/
 }
 
-.wrapper-all {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/*.wrapper-all {*/
+  /*display: flex;*/
+  /*flex-direction: column;*/
+  /*align-items: center;*/
+/*}*/
+
+.dropzone {
+    background: white;
+    border-radius: 5px;
+    border: 2px dashed rgb(0, 135, 247);
+    border-image: none;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* includes alternating gray and white with on-hover color */
+
+.mystyle {
+    font-size: 11pt;
+    font-family: Arial;
+    border-collapse: collapse;
+    border: 1px solid silver;
+
+}
+
+.mystyle td, th {
+    padding: 5px;
+}
+
+.mystyle tr:nth-child(even) {
+    background: #E0E0E0;
+}
+
+.mystyle tr:hover {
+    background: silver;
+    cursor: pointer;
 }
