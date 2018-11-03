@@ -1,5 +1,7 @@
 # Flask + nginx + Keras server for Video/Image demos
 
+![video-demo example](video-demo_low.gif)
+
 Move `video-demo.service` to `/etc/systemd/system/video-demo.service`
 
 
