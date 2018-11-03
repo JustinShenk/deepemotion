@@ -1,0 +1,13 @@
+[Unit]
+Description=Gunicorn instance to serve video-demo
+After=network.target
+
+[Service]
+User=justinshenk
+Group=www-data
+WorkingDirectory=/home/justinshenk/video-demo
+Environment="PATH=/home/justinshenk/video-demo/video-demo-env/bin"
+ExecStart=/home/justinshenk/video-demo/video-demo-env/bin/gunicorn --workers 1 --bind unix:video-demo.sock -m 007 wsgi:app --log-level=debug
+
+[Install]
+WantedBy=multi-user.target

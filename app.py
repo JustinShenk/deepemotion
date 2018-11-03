@@ -1,9 +1,15 @@
 import base64
 import glob
+import logging
+import sys
 import time
 import urllib
 
-import cv2
+try:
+    import cv2
+except:
+    sys.path.append('/usr/lib/python3/dist-packages')
+    import cv2
 import matplotlib
 matplotlib.use('Agg')
 
@@ -32,7 +38,9 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 30 * 1024 * 1024 # 30 MB limit
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 current_df = pd.DataFrame()
-SAMPLE_FILE = os.path.join(app.static_folder, "test.mp4")
+SAMPLE_FILE = os.path.join(app.static_folder, "sample.mp4")
+ret, _ = cv2.VideoCapture(SAMPLE_FILE).read()
+assert ret, "OpenCV installed at {} does not support video".format(cv2.__file__)
 
 global detector, graph
 sns.set()
@@ -342,4 +350,8 @@ def add_header(response):
     return response
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=5000)
+else:
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
