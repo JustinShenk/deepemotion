@@ -5,6 +5,8 @@ import sys
 import time
 import urllib
 
+__version__ = '0.0.1'
+
 try:
     import cv2
 except:
@@ -290,54 +292,7 @@ def analyze():
 @app.route('/', methods=['GET', 'POST'])
 def index():
     global current_df, current_video, graph
-    output = {}
-    # Load and display sample file
-    # if request.args.get('action') == 'load_sample':
-    #     session.pop('explore', None)
-    #     filename = SAMPLE_FILE.split('/')[-1]
-    #     current_video = load_video(SAMPLE_FILE)
-    #     screenshot = get_frame(current_video, encoding='opencv')
-    #     cv2.imwrite(to_uploads('screenshot.png'), screenshot)
-    #     session['screenshot'] = 'screenshot.png'
-    #     session['filename'] = filename
-    #     session['loaded'] = True
-
-    # if request.args.get('action') == 'analyze':
-    #     analyze_response = analyze()
-    #     app.logger.info(analyze_response)
-        # if analyze_response.status == 200:
-        #     response = app.response_class(
-        #         response=json.dumps(session),
-        #         status=200,
-        #         mimetype='application/json'
-        #     )
-        #     app.logger.info("prepared response")
-        # else:
-        #     app.logger.error(analyze_response)
-        # return response
-    #     session['explore'] = True
-    #     # Remove previous frames
-    #     [os.remove(f) for f in glob.glob(to_uploads('frame*.jpg'))]
-    #     # Analyze video and save every 50th frame
-    #     with graph.as_default():
-    #         raw_data = current_video.analyze(detector, display=False, frequency=30)
-    #     video_outfile = 'output.mp4'
-    #     assert os.path.isfile(to_uploads(video_outfile)), app.logger.error("no output.mp4")
-    #     session['video_filename'] = 'output.mp4'
-    #     df = current_video.to_pandas(raw_data)
-    #     current_df = current_video.get_first_face(df).dropna()
-    #     csvpath = ''.join(session['filename'].split('.')[:-1]) + '.csv'
-    #     csvpath = to_uploads(csvpath)
-    #     current_df.to_csv(csvpath)
-    #     output['csv_filename'] = os.path.split(csvpath)[1]
-    #     output['dataframe'] = current_df.head(10).to_html(float_format=lambda x: '%.2f' % x)
-    #     output['output_images'] = get_output_images(current_video.outdir)
-    #     emotions = current_video.get_emotions(current_df)
-    #     emotions.plot()
-    #     emotions_chart = to_uploads('emotions_chart.png')
-    #     plt.savefig(emotions_chart)
-    #     output['emotions_chart'] = 'emotions_chart.png'
-    return render_template('index.html', **output, **session)
+    return render_template('index.html', **session)
 
 @app.after_request
 def add_header(response):
