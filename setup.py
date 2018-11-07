@@ -39,7 +39,7 @@ def readme():
 if sys.version_info < (3, 4, 1):
     sys.exit('Python < 3.4.1 is not supported!')
 
-if not os.exists('config.cfg'):
+if not os.path.exists('config.cfg'):
     SECRET_KEY = os.urandom(16)
     with open('config.cfg', 'w') as f:
         f.write(f'SECRET_KEY={SECRET_KEY}')
