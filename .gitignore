@@ -1,2 +1,4 @@
 .DS_Store
 .idea/
+config.cfg
+__pycache__/
