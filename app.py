@@ -34,7 +34,8 @@ pd.set_option('display.width', 1000)
 pd.set_option('colheader_justify', 'center')
 
 app = Flask(__name__)
-app.secret_key = b'secret_key'
+app.config.from_pyfile('config.cfg')
+
 UPLOAD_FOLDER = os.path.join(app.instance_path, 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 30 * 1024 * 1024 # 30 MB limit
