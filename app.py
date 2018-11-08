@@ -2,8 +2,6 @@ import base64
 import glob
 import logging
 import sys
-import time
-import urllib
 
 __version__ = '0.0.1'
 
@@ -35,6 +33,10 @@ pd.set_option('colheader_justify', 'center')
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
 
+os.environ['EMOTION_API_URL'] = 'https://a.peltarion.com/deployment/bdc826ab-07b7-49c9-9a54-8b2e7660ae41/forward'
+os.environ['EMOTION_API_TOKEN'] = 'ad2f2a62-f2cb-43fc-a282-37d6b5406de5'
+os.environ['FLASK_INSTANCE_PATH'] = app.instance_path
+
 UPLOAD_FOLDER = os.path.join(app.instance_path, 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 30 * 1024 * 1024  # 30 MB limit
@@ -48,7 +50,9 @@ assert ret, "OpenCV installed at {} does not support video".format(
 global detector, graph
 sns.set()
 
-detector = FER()
+detector = FER(emotion_model=os.environ.get('EMOTION_API_URL', 'http'))
+# detector = FER()
+
 current_video = None
 
 
@@ -289,7 +293,7 @@ def analyze():
     session['csv_filename'] = os.path.split(csvpath)[1]
     session['dataframe'] = current_df.head(5).to_html(
         float_format=lambda x: '%.2f' % x, classes='mystyle')
-    # import ipdb;ipdb.set_trace()
+
     # session['dataframe'] = current_df.head(10).style.format('%.2f').render()
     session['output_images'] = get_output_images(current_video.outdir)
     emotions = current_video.get_emotions(current_df)
