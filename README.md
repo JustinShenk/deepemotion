@@ -1,10 +1,5 @@
-# Flask + nginx + Keras server for Video/Image demos
+# Flask + Nginx + Peltarion/Keras for Video/Image demos
 
 ![video-demo example](video-demo_mid.gif)
 
-Move `video-demo.service` to `/etc/systemd/system/video-demo.service`
-
-
-```sudo apt -y install python3-opencv python3-dev python3-numpy libtbb2 libttb-dev libdc1394-22-deev libjpeg-dev libpng-dev libtiff-dev gfortran openexr libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev build-essential cmake git pkg-config libgtk-3-dev libjpeg-dev libpng-dev libtiff-dev gfortran openexr ffmpeg```
-
-```sudo cp nginx.conf /etc/nginx/nginx.conf```
+Instructions for installing Nginx and Gunicorn for Flask are available on [Digital Ocean](https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-gunicorn-and-nginx-on-ubuntu-18-04).
