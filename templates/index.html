@@ -345,6 +345,7 @@
             {#    .wrap(link);#}
             $.each(data.result.files, function (index, file) {
                 console.log(data.context.children()[index]);
+                var node = $(data.context.children()[index]);
                 if (file.url) {
                     var link = $('<a>')
                         .attr('target', '_blank')

@@ -2,6 +2,7 @@ import base64
 import glob
 import logging
 import sys
+import uuid
 
 __version__ = '0.0.1'
 
@@ -33,8 +34,8 @@ pd.set_option('colheader_justify', 'center')
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
 
-os.environ['EMOTION_API_URL'] = app.config.get('EMOTION_API_URL', None)
-os.environ['EMOTION_API_TOKEN'] = app.config.get('EMOTION_API_TOKEN',None)
+os.environ['EMOTION_API_URL'] = app.config.get('EMOTION_API_URL', '')
+os.environ['EMOTION_API_TOKEN'] = app.config.get('EMOTION_API_TOKEN', '')
 os.environ['FLASK_INSTANCE_PATH'] = app.instance_path
 
 UPLOAD_FOLDER = os.path.join(app.instance_path, 'uploads')
@@ -127,7 +128,7 @@ def load_video(filename):
     global current_video
     current_video = Video(
         filename,
-        outdir=app.config['UPLOAD_FOLDER'],
+        outdir='/tmp',
         tempfile=to_uploads('temp_outfile.mp4'))
     return current_video
 
@@ -140,28 +141,37 @@ def get_frame(video_obj, frame_nr=0, encoding='base64'):
         app.logger.error("Less than {} frames in video".format(frame_nr))
     video_obj.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
     h, w = frame.shape[:2]
+    # TODO: resize based on image size
     frame = cv2.resize(
         frame, (0, 0), fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
     if encoding is 'opencv':
         return frame
     elif encoding is 'base64':
-        retval, buffer = cv2.imencode('.jpg', frame)
+        _, buffer = cv2.imencode('.jpg', frame)
         b64image = base64.b64encode(buffer)
         data_url = b'data:image/jpeg;base64,' + b64image
         return data_url.decode('utf8')
 
 
-def get_output_images(outdir, nr=3):
-    files = glob.glob(os.path.join(outdir, 'frame*.jpg'))
+def get_output_images(video_id, outdir, nr=3):
+    import ipdb;ipdb.set_trace()
+    files = glob.glob(os.path.join(outdir, f'{video_id}*.jpg'))
+    # TODO Implement buckets for storage
+    # Move to static directory for serving
+    target_dir = app.static_folder
+    local_files = []
+    for file in files:
+        target = to_uploads(os.path.basename(file))
+        os.rename(file, target)
+        local_files.append(''.join(target.split('/instance/')[-1]))
     # Get relative path
-    files = [''.join(file.split('/instance/')[-1]) for file in files]
-    total_files = len(files)
+    total_files = len(local_files)
     if total_files <= nr:
         return files
     output_images = []
     for idx, interval_idx in enumerate(
-            range(0, len(files), total_files // nr)):
-        output_images.append(files[idx])
+            range(0, total_files, total_files // nr)):
+        output_images.append(local_files[idx])
         if idx + 1 == nr:
             break
     return output_images
@@ -192,7 +202,7 @@ def upload():
             app.logger.error('No file part')
             return redirect(request.url)
         # if user does not select file, browser also
-        # submit an empty part without filename
+        # submits an empty part without filename
         if file.filename == '':
             # flash('No selected file', category="Error")
             return redirect(request.url)
@@ -201,6 +211,7 @@ def upload():
                 file.filename))
         elif file and allowed_file(file.filename):
             session.clear()
+            # Save video
             filename = secure_filename(file.filename)
             session['complete_video'] = request.files.get(
                 'completeVideo', False)
@@ -208,25 +219,15 @@ def upload():
             file.save(mp4path)
             app.logger.info("Saved to {}".format(mp4path))
             current_video = load_video(mp4path)
+            # Save screenshots with emotion labels
             screenshot = get_frame(current_video, encoding='opencv')
             cv2.imwrite(to_uploads('screenshot.png'), screenshot)
             session['screenshot'] = 'screenshot.png'
             session['filename'] = filename
             session['loaded'] = True
             results = analyze()
+            os.remove(mp4path)
             return results
-            # response = None
-            # if analyze_response.status == 200:
-            #     # return redirect('/')
-            #     response = app.response_class(
-            #         response=json.dumps(session),
-            #         status=200,
-            #         mimetype='application/json'
-            #     )
-            #     app.logger.info("prepared response")
-            # else:
-            #     app.logger.error(analyze_response)
-            # return response
         app.logger.error("Error with analysis")
         return False
     # return redirect(url_for('analyze'))
@@ -253,8 +254,10 @@ def analyze():
             cv2.CAP_PROP_FRAME_HEIGHT) > 0, 'Video not loaded correctly'
         frequency = 1 if session['complete_video'] else 20
         app.logger.info("Analyzing every {} frame".format(frequency))
+        # Analyze video and get dataframe with emotions
+        video_id = str(uuid.uuid4())[:9]
         df = current_video.analyze(
-            detector, display=False, frequency=frequency, output='pandas')
+            detector, display=False, frequency=frequency, video_id=video_id, max_results=10, output='pandas')
         if df.dropna().empty:
             # flash('No faces detected in sampled frames of {}'.format(current_video.filename()),'error')
             app.logger.error(
@@ -285,7 +288,7 @@ def analyze():
         float_format=lambda x: '%.2f' % x, classes='mystyle')
 
     # session['dataframe'] = current_df.head(10).style.format('%.2f').render()
-    session['output_images'] = get_output_images(current_video.outdir)
+    session['output_images'] = get_output_images(video_id, current_video.outdir)
     emotions = current_video.get_emotions(current_df)
     try:
         emotions.plot()
