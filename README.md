@@ -2,7 +2,7 @@
 
 DeepEmotion is a web app for detecting emotions in video frames. 
 
-It runs on Flask + Nginx + Peltarion/Keras.
+It runs on Flask + Nginx + Peltarion API.
 
 ![video-demo example](video-demo_mid.gif)
 
