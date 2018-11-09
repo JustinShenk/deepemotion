@@ -33,8 +33,8 @@ pd.set_option('colheader_justify', 'center')
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
 
-os.environ['EMOTION_API_URL'] = 'https://a.peltarion.com/deployment/bdc826ab-07b7-49c9-9a54-8b2e7660ae41/forward'
-os.environ['EMOTION_API_TOKEN'] = 'ad2f2a62-f2cb-43fc-a282-37d6b5406de5'
+os.environ['EMOTION_API_URL'] = app.config.get('EMOTION_API_URL', None)
+os.environ['EMOTION_API_TOKEN'] = app.config.get('EMOTION_API_TOKEN',None)
 os.environ['FLASK_INSTANCE_PATH'] = app.instance_path
 
 UPLOAD_FOLDER = os.path.join(app.instance_path, 'uploads')
@@ -75,16 +75,6 @@ def allowed_file(filename):
     if not allowed:
         app.logger.error(filename + " not allowed")
     return allowed
-
-
-def analyze_df(position_df):
-    global current_df
-    try:
-        position_df = calc_distance(position_df)
-        current_df = position_df
-    except Exception as e:
-        app.logger.error(e)
-    return position_df
 
 
 def display_file(csvpath):
