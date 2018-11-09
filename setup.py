@@ -65,6 +65,8 @@ setup(
         'seaborn',
         'flask',
         'fer',
+        'gunicorn',
+        'uwsgi',
     ],
     classifiers=[
         'Environment :: Console',
