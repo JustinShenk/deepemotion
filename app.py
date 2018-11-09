@@ -2,8 +2,8 @@ import base64
 import glob
 import logging
 import sys
-import time
-import urllib
+
+__version__ = '0.0.1'
 
 try:
     import cv2
@@ -18,7 +18,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
-import requests
 import seaborn as sns
 
 from fer.fer import FER
@@ -32,31 +31,43 @@ pd.set_option('display.width', 1000)
 pd.set_option('colheader_justify', 'center')
 
 app = Flask(__name__)
-app.secret_key = b'secret_key'
+app.config.from_pyfile('config.cfg')
+
+os.environ['EMOTION_API_URL'] = app.config.get('EMOTION_API_URL', None)
+os.environ['EMOTION_API_TOKEN'] = app.config.get('EMOTION_API_TOKEN',None)
+os.environ['FLASK_INSTANCE_PATH'] = app.instance_path
+
 UPLOAD_FOLDER = os.path.join(app.instance_path, 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 30 * 1024 * 1024 # 30 MB limit
+app.config['MAX_CONTENT_LENGTH'] = 30 * 1024 * 1024  # 30 MB limit
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 current_df = pd.DataFrame()
 SAMPLE_FILE = os.path.join(app.static_folder, "sample.mp4")
 ret, _ = cv2.VideoCapture(SAMPLE_FILE).read()
-assert ret, "OpenCV installed at {} does not support video".format(cv2.__file__)
+assert ret, "OpenCV installed at {} does not support video".format(
+    cv2.__file__)
 
 global detector, graph
 sns.set()
 
-detector = FER()
+detector = FER(emotion_model=os.environ.get('EMOTION_API_URL', 'http'))
+# detector = FER()
+
 current_video = None
+
 
 def read_csv(file):
     position_df = pd.read_csv(file, index_col='time_stamps_vec')[['x', 'y']]
     position_df *= 100
     return position_df
 
+
 def calc_distance(position_df):
-    position_df['distance'] = np.sqrt(np.power(position_df['x'].shift() - position_df['x'], 2) +
-                                   np.power(position_df['y'].shift() - position_df['y'], 2))
+    position_df['distance'] = np.sqrt(
+        np.power(position_df['x'].shift() - position_df['x'], 2) +
+        np.power(position_df['y'].shift() - position_df['y'], 2))
     return position_df
+
 
 def allowed_file(filename):
     allowed = '.' in filename and \
@@ -66,19 +77,10 @@ def allowed_file(filename):
     return allowed
 
 
-def analyze_df(position_df):
-    global current_df
-    try:
-        position_df = calc_distance(position_df)
-        current_df = position_df
-    except Exception as e:
-        app.logger.error(e)
-    return position_df
-
-
 def display_file(csvpath):
     position_df = read_csv(csvpath)
     return position_df
+
 
 def format_plot(column, columns=None, overlay=False):
     plt.ylabel("Frequency")
@@ -116,25 +118,30 @@ def get_plots(columns, overlay=False):
     app.logger.info(plots)
     return plots
 
+
 def to_uploads(filename):
     return os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
+
 def load_video(filename):
     global current_video
-    current_video = Video(filename,
-                          outdir=app.config['UPLOAD_FOLDER'],
-                          tempfile=to_uploads('temp_outfile.mp4'))
+    current_video = Video(
+        filename,
+        outdir=app.config['UPLOAD_FOLDER'],
+        tempfile=to_uploads('temp_outfile.mp4'))
     return current_video
 
-def get_frame(video_obj, frame_nr=0, encoding = 'base64'):
+
+def get_frame(video_obj, frame_nr=0, encoding='base64'):
     try:
-        for i in range(frame_nr+1):
+        for i in range(frame_nr + 1):
             ret, frame = video_obj.cap.read()
     except:
         app.logger.error("Less than {} frames in video".format(frame_nr))
     video_obj.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
     h, w = frame.shape[:2]
-    frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
+    frame = cv2.resize(
+        frame, (0, 0), fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
     if encoding is 'opencv':
         return frame
     elif encoding is 'base64':
@@ -143,31 +150,35 @@ def get_frame(video_obj, frame_nr=0, encoding = 'base64'):
         data_url = b'data:image/jpeg;base64,' + b64image
         return data_url.decode('utf8')
 
+
 def get_output_images(outdir, nr=3):
-    files = glob.glob(os.path.join(outdir,'frame*.jpg'))
+    files = glob.glob(os.path.join(outdir, 'frame*.jpg'))
     # Get relative path
     files = [''.join(file.split('/instance/')[-1]) for file in files]
     total_files = len(files)
     if total_files <= nr:
         return files
     output_images = []
-    for idx, interval_idx in enumerate(range(0, len(files), total_files//nr)):
+    for idx, interval_idx in enumerate(
+            range(0, len(files), total_files // nr)):
         output_images.append(files[idx])
-        if idx+1 == nr:
+        if idx + 1 == nr:
             break
     return output_images
+
 
 @app.route('/reset')
 def reset():
     session.clear()
     return redirect(url_for('index'))
 
+
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'],
-                               filename)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-@app.route('/upload', methods=['GET','POST'])
+
+@app.route('/upload', methods=['GET', 'POST'])
 def upload():
     global current_df, current_video, graph
     app.logger.info("/upload accessed")
@@ -186,11 +197,13 @@ def upload():
             # flash('No selected file', category="Error")
             return redirect(request.url)
         elif file and not allowed_file(file.filename):
-            flash('Filename {} not allowed. Try with mp4 files'.format(file.filename))
+            flash('Filename {} not allowed. Try with mp4 files'.format(
+                file.filename))
         elif file and allowed_file(file.filename):
             session.clear()
             filename = secure_filename(file.filename)
-            session['complete_video'] = request.files.get('completeVideo',False)
+            session['complete_video'] = request.files.get(
+                'completeVideo', False)
             mp4path = to_uploads(filename)
             file.save(mp4path)
             app.logger.info("Saved to {}".format(mp4path))
@@ -225,7 +238,6 @@ def remove_frames(folder):
         os.remove(file)
 
 
-
 @app.route('/analyze', methods=['GET'])
 def analyze():
     """Process analyze request."""
@@ -237,17 +249,22 @@ def analyze():
 
     # Analyze video and save every nth frame
     try:
-        assert current_video.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) > 0, 'Video not loaded correctly'
+        assert current_video.cap.get(
+            cv2.CAP_PROP_FRAME_HEIGHT) > 0, 'Video not loaded correctly'
         frequency = 1 if session['complete_video'] else 20
         app.logger.info("Analyzing every {} frame".format(frequency))
-        df = current_video.analyze(detector, display=False, frequency=frequency, output='pandas')
+        df = current_video.analyze(
+            detector, display=False, frequency=frequency, output='pandas')
         if df.dropna().empty:
             # flash('No faces detected in sampled frames of {}'.format(current_video.filename()),'error')
-            app.logger.error('No faces detected in sampled frames of {}'.format(current_video.filename()))
+            app.logger.error(
+                'No faces detected in sampled frames of {}'.format(
+                    current_video.filename()))
             return Response('Upload failed', status=300)
         elif len(df.dropna()) == 1:
             # flash('Only one of sample frames found with face - try another video.','error')
-            app.logger.error("Only one sample frame found with face - try another video")
+            app.logger.error(
+                "Only one sample frame found with face - try another video")
     except AttributeError:
         app.logger.error('current_video is NoneType')
         return Response('Upload failed', status=500)
@@ -256,15 +273,17 @@ def analyze():
 
     if not os.path.isfile(to_uploads(video_outfile)):
         # flash('Video output.mp4 not found on server','error')
-        app.logger.error("Video {} not found on server".format(to_uploads(video_outfile)))
+        app.logger.error("Video {} not found on server".format(
+            to_uploads(video_outfile)))
     session['video_filename'] = video_outfile
     current_df = current_video.get_first_face(df).dropna()
     csvpath = ''.join(session['filename'].split('.')[:-1]) + '.csv'
     csvpath = to_uploads(csvpath)
     current_df.to_csv(csvpath)
     session['csv_filename'] = os.path.split(csvpath)[1]
-    session['dataframe'] = current_df.head(5).to_html(float_format=lambda x: '%.2f' % x, classes='mystyle')
-    # import ipdb;ipdb.set_trace()
+    session['dataframe'] = current_df.head(5).to_html(
+        float_format=lambda x: '%.2f' % x, classes='mystyle')
+
     # session['dataframe'] = current_df.head(10).style.format('%.2f').render()
     session['output_images'] = get_output_images(current_video.outdir)
     emotions = current_video.get_emotions(current_df)
@@ -278,66 +297,23 @@ def analyze():
     plt.savefig(emotions_chart)
     session['emotions_chart'] = 'emotions_chart.png'
     session['explore'] = True
-    result = jsonify({'files':[{
-        'url': (f'uploads/{video_outfile}'),
-        'name':session['filename'],
-        'screenshots': session.get('output_images'),
-        'plot_url': 'uploads/' + session.get('emotions_chart'),
-        'dataframe': session.get('dataframe')
-    }]})
+    result = jsonify({
+        'files': [{
+            'url': (f'uploads/{video_outfile}'),
+            'name': session['filename'],
+            'screenshots': session.get('output_images'),
+            'plot_url': 'uploads/' + session.get('emotions_chart'),
+            'dataframe': session.get('dataframe')
+        }]
+    })
     return result
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     global current_df, current_video, graph
-    output = {}
-    # Load and display sample file
-    # if request.args.get('action') == 'load_sample':
-    #     session.pop('explore', None)
-    #     filename = SAMPLE_FILE.split('/')[-1]
-    #     current_video = load_video(SAMPLE_FILE)
-    #     screenshot = get_frame(current_video, encoding='opencv')
-    #     cv2.imwrite(to_uploads('screenshot.png'), screenshot)
-    #     session['screenshot'] = 'screenshot.png'
-    #     session['filename'] = filename
-    #     session['loaded'] = True
+    return render_template('index.html', **session)
 
-    # if request.args.get('action') == 'analyze':
-    #     analyze_response = analyze()
-    #     app.logger.info(analyze_response)
-        # if analyze_response.status == 200:
-        #     response = app.response_class(
-        #         response=json.dumps(session),
-        #         status=200,
-        #         mimetype='application/json'
-        #     )
-        #     app.logger.info("prepared response")
-        # else:
-        #     app.logger.error(analyze_response)
-        # return response
-    #     session['explore'] = True
-    #     # Remove previous frames
-    #     [os.remove(f) for f in glob.glob(to_uploads('frame*.jpg'))]
-    #     # Analyze video and save every 50th frame
-    #     with graph.as_default():
-    #         raw_data = current_video.analyze(detector, display=False, frequency=30)
-    #     video_outfile = 'output.mp4'
-    #     assert os.path.isfile(to_uploads(video_outfile)), app.logger.error("no output.mp4")
-    #     session['video_filename'] = 'output.mp4'
-    #     df = current_video.to_pandas(raw_data)
-    #     current_df = current_video.get_first_face(df).dropna()
-    #     csvpath = ''.join(session['filename'].split('.')[:-1]) + '.csv'
-    #     csvpath = to_uploads(csvpath)
-    #     current_df.to_csv(csvpath)
-    #     output['csv_filename'] = os.path.split(csvpath)[1]
-    #     output['dataframe'] = current_df.head(10).to_html(float_format=lambda x: '%.2f' % x)
-    #     output['output_images'] = get_output_images(current_video.outdir)
-    #     emotions = current_video.get_emotions(current_df)
-    #     emotions.plot()
-    #     emotions_chart = to_uploads('emotions_chart.png')
-    #     plt.savefig(emotions_chart)
-    #     output['emotions_chart'] = 'emotions_chart.png'
-    return render_template('index.html', **output, **session)
 
 @app.after_request
 def add_header(response):
@@ -348,6 +324,7 @@ def add_header(response):
     response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
     response.headers['Cache-Control'] = 'public, max-age=0'
     return response
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
