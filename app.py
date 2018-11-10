@@ -154,7 +154,6 @@ def get_frame(video_obj, frame_nr=0, encoding='base64'):
 
 
 def get_output_images(video_id, outdir, nr=3):
-    import ipdb;ipdb.set_trace()
     files = glob.glob(os.path.join(outdir, f'{video_id}*.jpg'))
     # TODO Implement buckets for storage
     # Move to static directory for serving
@@ -257,7 +256,12 @@ def analyze():
         # Analyze video and get dataframe with emotions
         video_id = str(uuid.uuid4())[:9]
         df = current_video.analyze(
-            detector, display=False, frequency=frequency, video_id=video_id, max_results=10, output='pandas')
+            detector,
+            display=False,
+            frequency=frequency,
+            video_id=video_id,
+            max_results=10,
+            output='pandas')
         if df.dropna().empty:
             # flash('No faces detected in sampled frames of {}'.format(current_video.filename()),'error')
             app.logger.error(
@@ -288,7 +292,8 @@ def analyze():
         float_format=lambda x: '%.2f' % x, classes='mystyle')
 
     # session['dataframe'] = current_df.head(10).style.format('%.2f').render()
-    session['output_images'] = get_output_images(video_id, current_video.outdir)
+    session['output_images'] = get_output_images(video_id,
+                                                 current_video.outdir)
     emotions = current_video.get_emotions(current_df)
     try:
         emotions.plot()
