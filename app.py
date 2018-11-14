@@ -301,16 +301,17 @@ def analyze():
         # flash('Empty DataFrame', 'error')
         app.logger.error("Empty dataframe")
         return False
-    emotions_chart = to_uploads('emotions_chart.png')
-    plt.savefig(emotions_chart)
-    session['emotions_chart'] = 'emotions_chart.png'
+    plot_filename = f"{session.get('filename')}-emotions-chart.png"
+    emotions_chart_path = to_uploads(plot_filename)
+    plt.savefig(emotions_chart_path)
+    session['emotions_chart'] = f'uploads/{plot_filename}'
     session['explore'] = True
     result = jsonify({
         'files': [{
             'url': (f'uploads/{video_outfile}'),
             'name': session['filename'],
             'screenshots': session.get('output_images'),
-            'plot_url': 'uploads/' + session.get('emotions_chart'),
+            'plot_url': session['emotions_chart'],
             'dataframe': session.get('dataframe')
         }]
     })
