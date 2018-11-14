@@ -72,7 +72,7 @@ def calc_distance(position_df):
 
 def allowed_file(filename):
     allowed = '.' in filename and \
-           filename.rsplit('.', 1)[-1].lower() in ['mp4','avi','mov','mpg','mkv']
+           filename.rsplit('.', 1)[-1].lower() in ['mp4','avi','mov','mpg','mkv','webm']
     if not allowed:
         app.logger.error(filename + " not allowed")
     return allowed
@@ -154,7 +154,6 @@ def get_frame(video_obj, frame_nr=0, encoding='base64'):
 
 
 def get_output_images(video_id, outdir, nr=3):
-    import ipdb;ipdb.set_trace()
     files = glob.glob(os.path.join(outdir, f'{video_id}*.jpg'))
     # TODO Implement buckets for storage
     # Move to static directory for serving
