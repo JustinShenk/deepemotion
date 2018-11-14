@@ -121,7 +121,8 @@
         <div class="panel-body">
             <ul>
                 <li>The maximum file size for uploads in this demo is <strong>10 MB</strong>.</li>
-                <li>Only video files (<strong>MPG, MP4, AVI, MOV, M4V</strong>) are allowed in this demo.</li>
+                <li>Only video files (<strong>MPG, MP4, AVI, MOV, M4V, WEBM</strong>) are allowed in this demo.</li>
+		<li>Every 20th frame is anaylzed, up to 10 analyses are returned in this demo</li>
             </ul>
         </div>
     </div>
@@ -290,7 +291,7 @@
             url: url,
             dataType: 'json',
             autoUpload: false,
-            acceptFileTypes: /(\.|\/)(mp4|mov|avi|mpeg|m4v)$/i,
+            acceptFileTypes: /(\.|\/)(mp4|mov|avi|mpeg|m4v|webm)$/i,
             maxFileSize: 20999000, // 20 MB
             // Enable image resizing, except for Android and Opera,
             // which actually support image resizing, but fail to

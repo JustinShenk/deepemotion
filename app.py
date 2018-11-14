@@ -72,7 +72,7 @@ def calc_distance(position_df):
 
 def allowed_file(filename):
     allowed = '.' in filename and \
-           filename.rsplit('.', 1)[-1].lower() in ['mp4','avi','mov','mpg','mkv']
+           filename.rsplit('.', 1)[-1].lower() in ['mp4','avi','mov','mpg','mkv','webm']
     if not allowed:
         app.logger.error(filename + " not allowed")
     return allowed
