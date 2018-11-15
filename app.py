@@ -4,8 +4,6 @@ import logging
 import sys
 import uuid
 
-__version__ = '0.0.1'
-
 try:
     import cv2
 except:
@@ -34,15 +32,20 @@ pd.set_option('colheader_justify', 'center')
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
 
-os.environ['EMOTION_API_URL'] = app.config.get('EMOTION_API_URL', '')
-os.environ['EMOTION_API_TOKEN'] = app.config.get('EMOTION_API_TOKEN', '')
+os.environ['EMOTION_API_URL'] = app.config.get('EMOTION_API_URL', None)
+os.environ['EMOTION_API_TOKEN'] = app.config.get('EMOTION_API_TOKEN', None)
 os.environ['FLASK_INSTANCE_PATH'] = app.instance_path
+if os.environ.get('KERAS_MODEL'):
+    os.environ.pop('EMOTION_API_URL')
+    os.environ.pop('EMOTION_API_TOKEN')
 
 UPLOAD_FOLDER = os.path.join(app.instance_path, 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 30 * 1024 * 1024  # 30 MB limit
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 current_df = pd.DataFrame()
+
+# Assert OpenCV version reads videos
 SAMPLE_FILE = os.path.join(app.static_folder, "sample.mp4")
 ret, _ = cv2.VideoCapture(SAMPLE_FILE).read()
 assert ret, "OpenCV installed at {} does not support video".format(
@@ -186,7 +189,7 @@ def uploaded_file(filename):
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
-    global current_df, current_video, graph
+    global current_video, graph
     app.logger.info("/upload accessed")
     if request.method == 'POST':
         preview = False
@@ -238,7 +241,7 @@ def remove_frames(folder):
 @app.route('/analyze', methods=['GET'])
 def analyze():
     """Process analyze request."""
-    global current_df, current_video, graph
+    global current_video, graph
     results = []
     output = {}
     # Remove previous frames
@@ -248,7 +251,7 @@ def analyze():
     try:
         assert current_video.cap.get(
             cv2.CAP_PROP_FRAME_HEIGHT) > 0, 'Video not loaded correctly'
-        frequency = 1 if session['complete_video'] else 20
+        frequency = 10 if (os.environ.get('TOKEN_PARAM')==os.environ.get('FULL_API_TOKEN')) else 20
         app.logger.info("Analyzing every {} frame".format(frequency))
         # Analyze video and get dataframe with emotions
         video_id = str(uuid.uuid4())[:9]
@@ -257,15 +260,21 @@ def analyze():
             display=False,
             frequency=frequency,
             video_id=video_id,
-            max_results=None if app.debug else 10,
+            max_results=None if (os.environ.get('FLASK_DEBUG', None) or os.environ.get('VALID_TOKEN')) else 10,
             output='pandas')
-        if df.dropna().empty:
+
+        # Remove frames without emotions detected
+        df.dropna(inplace=True)
+
+        # Check if any/one emotions found
+        if df.empty:
             # flash('No faces detected in sampled frames of {}'.format(current_video.filename()),'error')
             app.logger.error(
                 'No faces detected in sampled frames of {}'.format(
                     current_video.filename()))
             return Response('Upload failed', status=300)
-        elif len(df.dropna()) == 1:
+
+        elif len(df) == 1:
             # flash('Only one of sample frames found with face - try another video.','error')
             app.logger.error(
                 "Only one sample frame found with face - try another video")
@@ -280,29 +289,36 @@ def analyze():
         app.logger.error("Video {} not found on server".format(
             to_uploads(video_outfile)))
     session['video_filename'] = video_outfile
-    current_df = current_video.get_first_face(df).dropna()
     csvpath = ''.join(session['filename'].split('.')[:-1]) + '.csv'
     csvpath = to_uploads(csvpath)
-    current_df.to_csv(csvpath)
+    df.to_csv(csvpath)
     session['csv_filename'] = os.path.split(csvpath)[1]
-    session['dataframe'] = current_df.head(5).to_html(
+    session['dataframe'] = df.head(5).to_html(
         float_format=lambda x: '%.2f' % x, classes='mystyle')
 
     # session['dataframe'] = current_df.head(10).style.format('%.2f').render()
     session['output_images'] = get_output_images(video_id,
                                                  current_video.outdir)
-    emotions = current_video.get_emotions(current_df)
+    emotions = current_video.get_emotions(df)
+
+    # Plot emotions
     try:
-        emotions.plot()
+        fig, ax = plt.subplots()
+        ax = emotions.plot(ax=ax)
+        emotion_scores = ax.get_yticks()
+        ax.set(title=session.get('filename'),
+            xlabel="Frames" + f" (sampling every {frequency} frames)" if frequency > 1 else "",
+               yticklabels=['{:.0%}'.format(x) for x in emotion_scores] # to percent
+               )
     except TypeError:
         # flash('Empty DataFrame', 'error')
         app.logger.error("Empty dataframe")
         return False
     plot_filename = f"{session.get('filename')}-emotions-chart.png"
     emotions_chart_path = to_uploads(plot_filename)
-    plt.savefig(emotions_chart_path)
+    fig.savefig(emotions_chart_path)
     session['emotions_chart'] = f'uploads/{plot_filename}'
-    session['explore'] = True
+
     result = jsonify({
         'files': [{
             'url': (f'uploads/{video_outfile}'),
@@ -317,7 +333,8 @@ def analyze():
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    global current_df, current_video, graph
+    token = request.args.get('token', None)
+    os.environ['TOKEN_PARAM'] = token or ''
     return render_template('index.html', **session)
 
 
