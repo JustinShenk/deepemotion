@@ -38,7 +38,7 @@ os.environ['EMOTION_API_URL'] = app.config.get('EMOTION_API_URL', None)
 os.environ['EMOTION_API_TOKEN'] = app.config.get('EMOTION_API_TOKEN', None)
 os.environ['FLASK_INSTANCE_PATH'] = app.instance_path
 # Load reference token from environment if not in config
-os.environ['FULL_API_TOKEN'] = app.config.get('FULL_API_TOKEN', os.environ['FULL_API_TOKEN'])
+os.environ['FULL_API_TOKEN'] = app.config.get('FULL_API_TOKEN')
 if os.environ.get('KERAS_MODEL'):
     os.environ.pop('EMOTION_API_URL')
     os.environ.pop('EMOTION_API_TOKEN')
@@ -234,8 +234,9 @@ def analyze():
             display=False,
             frequency=frequency,
             video_id=video_id,
-            max_results=None if (os.environ.get('FLASK_DEBUG', None)
-                                 or os.environ.get('VALID_TOKEN')) else 10,
+            max_results=None if os.environ.get('FLASK_DEBUG')
+                                 or os.environ.get('TOKEN_PARAM') == os.environ.get('FULL_API_TOKEN') \
+                                         else 10,
             output='pandas')
 
         # Remove frames without emotions detected
