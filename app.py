@@ -38,7 +38,7 @@ os.environ['EMOTION_API_URL'] = app.config.get('EMOTION_API_URL', None)
 os.environ['EMOTION_API_TOKEN'] = app.config.get('EMOTION_API_TOKEN', None)
 os.environ['FLASK_INSTANCE_PATH'] = app.instance_path
 # Load reference token from environment if not in config
-os.environ['FULL_API_TOKEN'] = app.config.get('FULL_API_TOKEN', os.environ['FULL_API_TOKEN'])
+os.environ['FULL_API_TOKEN'] = app.config.get('FULL_API_TOKEN') or os.environ['FULL_API_TOKEN']
 if os.environ.get('KERAS_MODEL'):
     os.environ.pop('EMOTION_API_URL')
     os.environ.pop('EMOTION_API_TOKEN')
@@ -246,7 +246,7 @@ def analyze():
             # flash('No faces detected in sampled frames of {}'.format(current_video.filename()),'error')
             app.logger.error(
                 'No faces detected in sampled frames of {}'.format(
-                    current_video.filename()))
+                    current_video.filename))
             return Response('Upload failed', status=300)
 
         elif len(df) == 1:
