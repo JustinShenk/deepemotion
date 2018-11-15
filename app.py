@@ -30,11 +30,15 @@ pd.set_option('display.width', 1000)
 pd.set_option('colheader_justify', 'center')
 
 app = Flask(__name__)
+
+# TODO: Create separate config env for testing local models
 app.config.from_pyfile('config.cfg')
 
 os.environ['EMOTION_API_URL'] = app.config.get('EMOTION_API_URL', None)
 os.environ['EMOTION_API_TOKEN'] = app.config.get('EMOTION_API_TOKEN', None)
 os.environ['FLASK_INSTANCE_PATH'] = app.instance_path
+# Load reference token from environment if not in config
+os.environ['FULL_API_TOKEN'] = app.config.get('FULL_API_TOKEN', os.environ['FULL_API_TOKEN'])
 if os.environ.get('KERAS_MODEL'):
     os.environ.pop('EMOTION_API_URL')
     os.environ.pop('EMOTION_API_TOKEN')
