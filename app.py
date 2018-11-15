@@ -234,8 +234,9 @@ def analyze():
             display=False,
             frequency=frequency,
             video_id=video_id,
-            max_results=None if (os.environ.get('FLASK_DEBUG', None)
-                                 or os.environ.get('VALID_TOKEN')) else 10,
+            max_results=None if os.environ.get('FLASK_DEBUG')
+                                 or os.environ.get('TOKEN_PARAM') == os.environ.get('FULL_API_TOKEN') \
+                                         else 10,
             output='pandas')
 
         # Remove frames without emotions detected
