@@ -91,37 +91,6 @@ def format_plot(column, columns=None, overlay=False):
     plt.legend()
 
 
-def get_plots(columns, overlay=False):
-    plots = {}
-    for column in columns:
-        if overlay:
-            plt.hist(current_df[column], label=column)
-            format_plot(column, columns, overlay)
-            basename = ''.join(session.get('filename').split('.csv')[0])
-            plot_filename = "{}_{}.png".format(basename, ','.join(columns))
-            plot_url = os.path.join(app.config['UPLOAD_FOLDER'], plot_filename)
-            if column is columns[-1]:
-                if os.path.isfile(plot_url):
-                    os.remove(plot_url)
-                plt.savefig(plot_url)
-                plots[','.join(columns)] = plot_filename
-        else:
-            plt.clf()
-            plt.subplots()
-            plt.hist(current_df[column], label=column)
-            format_plot(column)
-            basename = ''.join(session.get('filename').split('.csv')[0])
-            plot_filename = "{}_{}.png".format(basename, column)
-            plot_url = os.path.join(app.config['UPLOAD_FOLDER'], plot_filename)
-            app.logger.info(plot_filename, plot_url)
-            if os.path.isfile(plot_url):
-                os.remove(plot_url)
-            plt.savefig(plot_url)
-            plots[column] = plot_filename
-    app.logger.info(plots)
-    return plots
-
-
 def to_uploads(filename):
     return os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
@@ -251,7 +220,8 @@ def analyze():
     try:
         assert current_video.cap.get(
             cv2.CAP_PROP_FRAME_HEIGHT) > 0, 'Video not loaded correctly'
-        frequency = 10 if (os.environ.get('TOKEN_PARAM')==os.environ.get('FULL_API_TOKEN')) else 20
+        frequency = 10 if (os.environ.get('TOKEN_PARAM') == os.environ.get(
+            'FULL_API_TOKEN')) else 20
         app.logger.info("Analyzing every {} frame".format(frequency))
         # Analyze video and get dataframe with emotions
         video_id = str(uuid.uuid4())[:9]
@@ -260,7 +230,8 @@ def analyze():
             display=False,
             frequency=frequency,
             video_id=video_id,
-            max_results=None if (os.environ.get('FLASK_DEBUG', None) or os.environ.get('VALID_TOKEN')) else 10,
+            max_results=None if (os.environ.get('FLASK_DEBUG', None)
+                                 or os.environ.get('VALID_TOKEN')) else 10,
             output='pandas')
 
         # Remove frames without emotions detected
@@ -306,10 +277,13 @@ def analyze():
         fig, ax = plt.subplots()
         ax = emotions.plot(ax=ax)
         emotion_scores = ax.get_yticks()
-        ax.set(title=session.get('filename'),
-            xlabel="Frames" + f" (sampling every {frequency} frames)" if frequency > 1 else "",
-               yticklabels=['{:.0%}'.format(x) for x in emotion_scores] # to percent
-               )
+        ax.set(
+            title=session.get('filename'),
+            xlabel="Frames" + f" (sampling every {frequency} frames)"
+            if frequency > 1 else "",
+            yticklabels=['{:.0%}'.format(x)
+                         for x in emotion_scores]  # to percent
+        )
     except TypeError:
         # flash('Empty DataFrame', 'error')
         app.logger.error("Empty dataframe")
