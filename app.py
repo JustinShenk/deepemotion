@@ -51,8 +51,7 @@ assert ret, "OpenCV installed at {} does not support video".format(
 global detector, graph
 sns.set()
 
-detector = FER(emotion_model=os.environ.get('EMOTION_API_URL', 'http'))
-# detector = FER()
+detector = FER(emotion_model=os.environ.get('EMOTION_API_URL', None))
 
 current_video = None
 
@@ -72,7 +71,7 @@ def calc_distance(position_df):
 
 def allowed_file(filename):
     allowed = '.' in filename and \
-           filename.rsplit('.', 1)[-1].lower() in ['mp4','avi','mov','mpg','mkv']
+           filename.rsplit('.', 1)[-1].lower() in ['mp4','avi','mov','mpg','mkv','webm']
     if not allowed:
         app.logger.error(filename + " not allowed")
     return allowed
@@ -127,9 +126,7 @@ def to_uploads(filename):
 def load_video(filename):
     global current_video
     current_video = Video(
-        filename,
-        outdir='/tmp',
-        tempfile=to_uploads('temp_outfile.mp4'))
+        filename, outdir='/tmp', tempfile=to_uploads('temp_outfile.mp4'))
     return current_video
 
 
@@ -260,7 +257,7 @@ def analyze():
             display=False,
             frequency=frequency,
             video_id=video_id,
-            max_results=10,
+            max_results=None if app.debug else 10,
             output='pandas')
         if df.dropna().empty:
             # flash('No faces detected in sampled frames of {}'.format(current_video.filename()),'error')
